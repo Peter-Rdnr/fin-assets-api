@@ -17,12 +17,22 @@ app.add_middleware(
 @app.get("/chart")
 def get_chart_data(
     symbol: str = Query(..., description="The ticker symbol, e.g. AAPL"),
-    years: int = Query(2, description="Number of years to look back")
+    years: int = Query(2, description="Number of years to look back"),
+    fields: str = Query("C", description="String containing letters O, H, L, C, V to filter data")
 ):
     try:
         # Calculate the time period
         end_date = datetime.now()
         start_date = end_date - timedelta(days=years * 365)
+
+        # Define fields
+        field_mask = fields.upper()
+        columns = ["date"]
+        if "O" in field_mask: columns.append("open")
+        if "H" in field_mask: columns.append("high")
+        if "L" in field_mask: columns.append("low")
+        if "C" in field_mask: columns.append("close")
+        if "V" in field_mask: columns.append("volume")
         
         # Retrieve data from YF
         ticker = yf.Ticker(symbol)
@@ -33,30 +43,25 @@ def get_chart_data(
         )
         
         if df.empty:
-            return {"error": f"No data found for symbol '{symbol}'."}
+            return []
         
         # Format the data for the API response
         df = df.reset_index()
         chart_data = []
         
         for _, row in df.iterrows():
-            chart_data.append([
-                row['Date'].tz_localize(None).strftime('%Y-%m-%d'),
-                round(row['Open'], 2),
-                round(row['High'], 2),
-                round(row['Low'], 2),
-                round(row['Close'], 2),
-                int(row['Volume'])
-            ])
+            row_data = [row['Date'].tz_localize(None).strftime('%Y-%m-%d')]
+            if "O" in field_mask: row_data.append(round(row['Open'], 2))
+            if "H" in field_mask: row_data.append(round(row['High'], 2))
+            if "L" in field_mask: row_data.append(round(row['Low'], 2))
+            if "C" in field_mask: row_data.append(round(row['Close'], 2))
+            if "V" in field_mask: row_data.append(int(row['Volume']))
+            chart_data.append(row_data)
             
-        return {
-            "symbol": symbol.upper(),
-            "years": years,
-            "data": chart_data
-        }
+        return chart_data
         
     except Exception as e:
-        return {"error": str(e)}
+        return []
 
 @app.get("/")
 def read_root():
