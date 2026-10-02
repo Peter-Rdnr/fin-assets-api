@@ -40,14 +40,14 @@ def get_chart_data(
         chart_data = []
         
         for _, row in df.iterrows():
-            chart_data.append({
-                "date": row['Date'].strftime('%Y-%m-%d'),
-                "open": round(row['Open'], 2),
-                "high": round(row['High'], 2),
-                "low": round(row['Low'], 2),
-                "close": round(row['Close'], 2),
-                "volume": int(row['Volume'])
-            })
+            chart_data.append([
+                row['Date'].tz_localize(None).strftime('%Y-%m-%d'),
+                round(row['Open'], 2),
+                round(row['High'], 2),
+                round(row['Low'], 2),
+                round(row['Close'], 2),
+                int(row['Volume'])
+            ])
             
         return {
             "symbol": symbol.upper(),
