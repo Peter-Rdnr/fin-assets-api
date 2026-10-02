@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 from datetime import datetime, timedelta
@@ -60,4 +60,4 @@ def get_chart_data(
 
 @app.get("/")
 def read_root():
-    return {"status": "API is running."}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
